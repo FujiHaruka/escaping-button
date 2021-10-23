@@ -6,3 +6,7 @@
   height: 100vh;
   background: #aaa;
 }
+
+.escaping-button {
+  position: absolute;
+}

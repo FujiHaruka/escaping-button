@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, VFC } from "react";
+import React, { useCallback, useEffect, useRef, useState, VFC } from "react";
 import "./App.css";
 
 type Viewport = {
@@ -6,9 +6,28 @@ type Viewport = {
   height: number;
 };
 
-type MousePosition = {
+type Position = {
   x: number;
   y: number;
+};
+
+const useIntervalEffect = (
+  callback: () => void,
+  ms: number,
+  deps: React.DependencyList
+) => {
+  const callbackRef = useRef<() => void>();
+  callbackRef.current = callback;
+  useEffect(() => {
+    callbackRef.current?.();
+    const timer = setInterval(() => {
+      callbackRef.current?.();
+    }, ms);
+    return () => {
+      clearInterval(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ms, ...deps]);
 };
 
 const useViewportSize = () => {
@@ -25,6 +44,9 @@ const useViewportSize = () => {
       });
     });
     observer.observe(target);
+    return () => {
+      observer.unobserve(target);
+    };
   }, []);
   return {
     viewport,
@@ -32,47 +54,94 @@ const useViewportSize = () => {
   };
 };
 
-const useMousePosition = () => {
-  const [mousePosition, set] = useState<MousePosition>({
+const useMousePositionTracking = () => {
+  const [mousePosition, set] = useState<Position>({
     x: 0,
     y: 0,
   });
   const observeMousePosition = useCallback((target: HTMLElement) => {
-    target.addEventListener("mousemove", (ev: MouseEvent) => {
+    const onMouseMove = (ev: MouseEvent) => {
       const { x, y } = ev;
       set({ x, y });
-    });
+    };
+    target.addEventListener("mousemove", onMouseMove);
+    return () => {
+      target.removeEventListener("mousemove", onMouseMove);
+    };
   }, []);
+
   return {
     mousePosition,
     observeMousePosition,
   };
 };
 
-const useEscapingTimer = () => {
-  const timer = setInterval(() => {}, 300);
-  return () => {
-    clearInterval(timer);
+const useElementPositionTracking = () => {
+  const elementRef = useRef<HTMLButtonElement>(null);
+  const [{ x, y }, set] = useState<Position>({ x: 0, y: 0 });
+
+  useIntervalEffect(
+    () => {
+      const element = elementRef.current;
+      if (!element) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      if (rect.x === x && rect.y === y) {
+        return;
+      }
+      set({
+        x: rect.x,
+        y: rect.y,
+      });
+    },
+    100,
+    [x, y]
+  );
+  return {
+    position: { x, y },
+    elementRef,
   };
 };
 
 const EscapingButton: VFC<{
   viewport: Viewport;
-  mousePosition: MousePosition;
+  mousePosition: Position;
 }> = ({ viewport, mousePosition }) => {
-  return <button>CLICK ME</button>;
+  const { position, elementRef } = useElementPositionTracking();
+  console.log({
+    viewport,
+    mousePosition,
+    position,
+  });
+  return (
+    <button
+      className="escaping-button"
+      ref={elementRef}
+      style={{ top: "40%", left: "40%" }}
+    >
+      CLICK ME
+    </button>
+  );
 };
 
 function App() {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const { viewport, observeSize } = useViewportSize();
-  const { mousePosition, observeMousePosition } = useMousePosition();
+  const { mousePosition, observeMousePosition } = useMousePositionTracking();
 
   useEffect(() => {
     const target = backgroundRef.current;
     if (target) {
-      observeSize(target);
-      observeMousePosition(target);
+      const unobserveSize = observeSize(target);
+      const unobservePosition = observeMousePosition(target);
+      return () => {
+        unobserveSize();
+        unobservePosition();
+      };
+    } else {
+      return () => {};
     }
   }, [observeSize, observeMousePosition]);
 
