@@ -9,4 +9,8 @@
 
 .escaping-button {
   position: absolute;
+  display: inline-block;
+  white-space: nowrap;
+  transform: translateX(-50%) translateY(-50%);
+  transition: all 200ms ease;
 }

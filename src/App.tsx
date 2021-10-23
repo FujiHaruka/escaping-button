@@ -1,5 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState, VFC } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  VFC,
+} from "react";
 import "./App.css";
+import { calcDistance, mostDistantPoint } from "./math";
 
 type Viewport = {
   width: number;
@@ -11,24 +19,11 @@ type Position = {
   y: number;
 };
 
-const useIntervalEffect = (
-  callback: () => void,
-  ms: number,
-  deps: React.DependencyList
-) => {
-  const callbackRef = useRef<() => void>();
-  callbackRef.current = callback;
-  useEffect(() => {
-    callbackRef.current?.();
-    const timer = setInterval(() => {
-      callbackRef.current?.();
-    }, ms);
-    return () => {
-      clearInterval(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ms, ...deps]);
-};
+const ESCAPING_THRESHOLD_DISTANCE = 80;
+const ESCAPING_DISTANCE = 80;
+
+const isZero = (obj: Record<string, number>) =>
+  Object.values(obj).every((n) => n === 0);
 
 const useViewportSize = () => {
   const [viewport, set] = useState<Viewport>({ width: 0, height: 0 });
@@ -76,51 +71,30 @@ const useMousePositionTracking = () => {
   };
 };
 
-const useElementPositionTracking = () => {
-  const elementRef = useRef<HTMLButtonElement>(null);
-  const [{ x, y }, set] = useState<Position>({ x: 0, y: 0 });
-
-  useIntervalEffect(
-    () => {
-      const element = elementRef.current;
-      if (!element) {
-        return;
-      }
-
-      const rect = element.getBoundingClientRect();
-      if (rect.x === x && rect.y === y) {
-        return;
-      }
-      set({
-        x: rect.x,
-        y: rect.y,
-      });
-    },
-    100,
-    [x, y]
-  );
+const useButtonPosition = () => {
+  const [buttonPosition, setButtonPosition] = useState<Position>({
+    x: 400,
+    y: 400,
+  });
   return {
-    position: { x, y },
-    elementRef,
+    buttonPosition,
+    setButtonPosition,
   };
 };
 
 const EscapingButton: VFC<{
-  viewport: Viewport;
-  mousePosition: Position;
-}> = ({ viewport, mousePosition }) => {
-  const { position, elementRef } = useElementPositionTracking();
-  console.log({
-    viewport,
-    mousePosition,
-    position,
-  });
+  position: Position;
+}> = ({ position }) => {
+  const { x, y } = position;
+  const style = useMemo(
+    () => ({
+      top: `${y}px`,
+      left: `${x}px`,
+    }),
+    [x, y]
+  );
   return (
-    <button
-      className="escaping-button"
-      ref={elementRef}
-      style={{ top: "40%", left: "40%" }}
-    >
+    <button className="escaping-button" style={style}>
       CLICK ME
     </button>
   );
@@ -130,6 +104,7 @@ function App() {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const { viewport, observeSize } = useViewportSize();
   const { mousePosition, observeMousePosition } = useMousePositionTracking();
+  const { buttonPosition, setButtonPosition } = useButtonPosition();
 
   useEffect(() => {
     const target = backgroundRef.current;
@@ -145,10 +120,38 @@ function App() {
     }
   }, [observeSize, observeMousePosition]);
 
+  useEffect(() => {
+    if (isZero(mousePosition) || isZero(viewport)) {
+      return;
+    }
+
+    if (
+      calcDistance(mousePosition, buttonPosition) > ESCAPING_THRESHOLD_DISTANCE
+    ) {
+      return;
+    }
+
+    const nextPosition = mostDistantPoint(
+      mousePosition,
+      buttonPosition,
+      ESCAPING_DISTANCE,
+      viewport
+    );
+    setButtonPosition(nextPosition);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    mousePosition.x,
+    mousePosition.y,
+    buttonPosition.x,
+    buttonPosition.y,
+    viewport.width,
+    viewport.height,
+  ]);
+
   return (
     <>
       <div className="background" ref={backgroundRef}></div>;
-      <EscapingButton viewport={viewport} mousePosition={mousePosition} />
+      <EscapingButton position={buttonPosition} />
     </>
   );
 }
