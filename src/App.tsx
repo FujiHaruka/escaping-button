@@ -19,8 +19,8 @@ type Position = {
   y: number;
 };
 
-const ESCAPING_THRESHOLD_DISTANCE = 80;
-const ESCAPING_DISTANCE = 80;
+const ESCAPING_THRESHOLD_DISTANCE = 200;
+const ESCAPING_DISTANCE = 200;
 
 const isZero = (obj: Record<string, number>) =>
   Object.values(obj).every((n) => n === 0);
@@ -94,8 +94,8 @@ const EscapingButton: VFC<{
     [x, y]
   );
   return (
-    <button className="escaping-button" style={style}>
-      CLICK ME
+    <button className="escaping-button secondary" style={style}>
+      CLICK ME IN THE RYE
     </button>
   );
 };
