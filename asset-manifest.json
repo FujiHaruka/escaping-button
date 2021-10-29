@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/escaping-button/static/css/main.b67431bc.chunk.css",
+    "main.js": "/escaping-button/static/js/main.bee8a80a.chunk.js",
+    "main.js.map": "/escaping-button/static/js/main.bee8a80a.chunk.js.map",
+    "runtime-main.js": "/escaping-button/static/js/runtime-main.34da3461.js",
+    "runtime-main.js.map": "/escaping-button/static/js/runtime-main.34da3461.js.map",
+    "static/js/2.4557a3b8.chunk.js": "/escaping-button/static/js/2.4557a3b8.chunk.js",
+    "static/js/2.4557a3b8.chunk.js.map": "/escaping-button/static/js/2.4557a3b8.chunk.js.map",
+    "index.html": "/escaping-button/index.html",
+    "static/css/main.b67431bc.chunk.css.map": "/escaping-button/static/css/main.b67431bc.chunk.css.map",
+    "static/js/2.4557a3b8.chunk.js.LICENSE.txt": "/escaping-button/static/js/2.4557a3b8.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.34da3461.js",
+    "static/js/2.4557a3b8.chunk.js",
+    "static/css/main.b67431bc.chunk.css",
+    "static/js/main.bee8a80a.chunk.js"
+  ]
+}
